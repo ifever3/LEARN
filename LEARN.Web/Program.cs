@@ -33,6 +33,8 @@ namespace LEARN.Web
             services.AddControllersWithViews();
 
             webSocket webSocket = new webSocket();
+               
+
 
             //services.AddMassTransit(x =>
             //{
