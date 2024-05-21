@@ -3,6 +3,8 @@ using LEARN.Web;
 using static LEARN.Web.customersended;
 using Fleck;
 using LEARN.Web.websocket;
+using Microsoft.AspNetCore.WebSockets;
+using WebSocketMiddleware = LEARN.Web.websocket.WebSocketMiddleware;
 
 namespace LEARN.Web
 {
@@ -32,8 +34,7 @@ namespace LEARN.Web
         {
             services.AddControllersWithViews();
 
-            webSocket webSocket = new webSocket();
-               
+          //  webSocket webSocket = new webSocket();
 
 
             //services.AddMassTransit(x =>
@@ -80,8 +81,18 @@ namespace LEARN.Web
                 app.UseHsts();
             }
 
-      
-         
+           
+            app.UseWebSockets(new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(60),
+                ReceiveBufferSize = 1 * 1024
+            });
+            app.UseMiddleware<WebSocketMiddleware>();
+
+           
+            
+
+
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
