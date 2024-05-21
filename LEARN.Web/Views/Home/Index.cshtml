@@ -1,0 +1,389 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@* @model IEnumerable<LEARN.Web.Models.Project> *@
+
+<div class="main-content">
+
+    <div class="header">
+            <h2 >STAFF管理</h2>
+            <textarea id="textbox1"></textarea>
+            <button class="btn btn-primary" id="getbtn">查询</button>
+        <button class="btn btn-primary" id="addButton">新建任务</button>
+
+        <!-- 模态框 -->
+        <div class="modal" id="myModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <!-- 模态框头部 -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">新建任务</h4>
+                    </div>
+
+                    <!-- 模态框主体 -->
+                    <div class="modal-body">
+                        <form id="taskForm">
+                            <div class="form-group">
+                                <label for="id">ID:</label>
+                                <input type="text" class="form-control" id="id" placeholder="Enter ID">
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Name:</label>
+                                <input type="text" class="form-control" id="name" placeholder="Enter name">
+                            </div>
+                            <div class="form-group">
+                                <label for="major">Major:</label>
+                                <input type="text" class="form-control" id="major" placeholder="Enter major">
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 模态框底部 -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close1">关闭</button>
+                        <button type="button" class="btn btn-primary" id="confirmTask">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">id</th>
+                    <th scope="col">名字</th>
+                    <th scope="col">专业</th>
+                    <th scope="col">操作</th> <!-- 添加操作列 -->
+                </tr>
+            </thead>
+            <tbody id="projectTableBody">
+                <!-- 使用 id 来标识表体以便后续填充数据 -->
+            </tbody>
+        </table>
+    <h2>RabbitMQ</h2>
+    <button class="btn btn-primary" id="sendmessage">发送消息</button>
+</div>
+
+<div class="modal" id="editModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">编辑任务</h4>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="form-group">
+                        <label for="edit-id">ID:</label>
+                        <input type="text" class="form-control" id="edit-id" placeholder="Enter ID" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-name">Name:</label>
+                        <input type="text" class="form-control" id="edit-name" placeholder="Enter name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-major">Major:</label>
+                        <input type="text" class="form-control" id="edit-major" placeholder="Enter major">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close2">关闭</button>
+                <button type="button" class="btn btn-primary" id="confirmEdit">确认修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // document.getElementById("getButton").addEventListener("click", function () {
+    //     fetch('https://localhost:7078/Staff/redis')  // 发起 GET 请求到后端的 /Staff/redis 路径
+    //         .then(response => response.text()) // 假设后端返回的是文本数据
+    //         .then(data => {
+    //             // 在这里处理后端返回的数据
+    //             document.getElementById("text").textContent = data;
+    //             console.log(data);
+    //         })
+    //         .catch(error => {
+    //             // 处理发生错误的情况
+    //             console.error('Error:', error);
+    //         });
+    // });
+
+    document.getElementById("addButton").addEventListener("click", function () {
+        // 弹出模态框
+        $('#myModal').modal('show');
+    });
+
+    document.getElementById("close1").addEventListener("click", function () {
+        // 弹出模态框
+        $('#myModal').modal('hide');
+    });
+
+    document.getElementById("confirmTask").addEventListener("click", function () {
+        var id = document.getElementById("id").value;
+        var name = document.getElementById("name").value;
+        var major = document.getElementById("major").value;
+
+        // 构造请求数据
+        var requestData = {
+            id: id,
+            name: name,
+            major: major
+        };
+
+        // 发送 fetch 请求...
+        fetch('https://localhost:7078/Staff/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('任务创建成功');
+                    // 执行其他操作，例如刷新任务列表等
+                    // 如果需要在任务创建成功后执行其他操作，请补充代码...
+                } else {
+                    console.log('任务创建失败');
+                }
+            })
+            .catch(error => {
+                console.error('发生错误:', error);
+            });
+
+        // 关闭模态框
+        $('#myModal').modal('hide');
+    });
+
+    document.getElementById("getbtn").addEventListener("click", function () {
+        var inputText = document.getElementById("textbox1").value;
+        fetch('https://localhost:7078/Staff/get?Major='+inputText)
+            .then(response => response.json())
+            .then(data => {
+                var tableBody = document.getElementById('projectTableBody'); // 获取表格的 tbody 元素
+
+                // 清空表格原有的数据
+                tableBody.innerHTML = '';
+
+                // 遍历 JSON 数据并动态生成表格行
+                data.data.forEach(item => {
+                    var row = `
+                                 <tr>
+                                     <td>${item.id}</td>
+                                     <td>${item.name}</td>                                     
+                                     <td>${item.major}</td>
+                                         <td class="actions">
+                                <a href="#" onclick="editProject('${item.id}')">编辑</a>
+                                <a href="#" onclick="deleteProject('${item.id}')">删除</a>
+                                     </td>
+
+                                 </tr>
+                         `;
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+
+    function editProject(id) {
+        // 根据项目 id 获取项目信息并填充到编辑模态框中 
+                document.getElementById('edit-id').value =id;
+
+                $('#editModal').modal('show');
+    }
+
+    document.getElementById("confirmEdit").addEventListener("click", function () {
+        var id = document.getElementById("edit-id").value;
+        var name = document.getElementById("edit-name").value;
+        var major = document.getElementById("edit-major").value;
+
+        // 构造请求数据
+        var editData = {
+            id: id, // 包括要编辑的项目的ID
+            name: name,
+            major: major
+        };
+
+        fetch('https://localhost:7078/Staff/update?id=' + editData.id, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(editData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('任务编辑成功');
+                    // 执行其他操作，如刷新表格等
+                    // 如果需要在任务编辑成功后执行其他操作，请补充代码...
+                    $('#editModal').modal('hide');
+                } else {
+                    console.log('任务编辑失败');
+                }
+            })
+            .catch(error => {
+                console.error('发生错误:', error);
+            });
+    });
+
+    document.getElementById("close2").addEventListener("click", function () {
+        // 弹出模态框
+        $('#editModal').modal('hide');
+    });
+
+    // 删除项目的函数
+    function deleteProject(id) {
+        // 根据项目 id 执行删除逻辑
+        // 使用 fetch 或其他方式请求后端进行删除操作
+        var confirmation = confirm("确定要删除该项目吗？");
+
+        if (confirmation) {
+        console.log('删除项目 ID: ' + id);
+        let deleteUrl = 'https://localhost:7078/Staff/delete?id=' + encodeURIComponent(id);
+        fetch(deleteUrl, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('项目删除成功');
+                    // 执行其他操作，如刷新表格等
+                } else {
+                    console.log('项目删除失败');
+                }
+            })
+            .catch(error => {
+                console.error('发生错误:', error);
+            });    
+        } else {
+            // 如果用户点击了取消按钮
+            console.log('用户取消删除操作');
+        }
+        
+    }
+
+
+
+</script>
+
+<script>
+    const sendMessageOnClick = async () => {
+        try {
+            const response = await fetch('/SendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: 'tom',
+                    subject: 'math'
+                })
+            });
+            const data = await response.json();
+            console.log(data);
+        } catch (error) {
+            console.error('发生错误：', error);
+        }
+    };
+
+    document.getElementById("sendmessage").addEventListener("click", sendMessageOnClick);
+</script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #f4f7f9;
+        padding: 15px;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eaeaea;
+    }
+
+        .header h2 {
+            margin: 0;
+        }
+
+    .add-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+        .table th, .table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .table th {
+            background-color: #f1f3f5;
+        }
+
+    .status {
+        display: flex;
+        align-items: center;
+    }
+
+        .status i {
+            margin-right: 5px;
+        }
+
+    .status-green {
+        color: green;
+    }
+
+    .status-yellow {
+        color: orange;
+    }
+
+    .status.in-progress {
+        background-color: #ff9800;
+    }
+
+    .status.completed {
+        background-color: #4caf50;
+    }
+
+    .status.cancelled {
+        background-color: #f44336;
+    }
+
+    .actions a {
+        margin-right: 10px;
+        text-decoration: none;
+        color: #007bff;
+    }
+
+        .actions a:hover {
+            color: #0056b3;
+        }
+</style>

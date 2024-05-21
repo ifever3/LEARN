@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fleck" Version="1.2.0" />
+    <PackageReference Include="MassTransit" Version="8.2.2" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="message">
+      <HintPath>..\..\message\message\bin\Debug\netstandard2.1\message.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
