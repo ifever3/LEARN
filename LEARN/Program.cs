@@ -1,5 +1,6 @@
 using Autofac.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Hosting;
+using Hangfire;
+using LEARN.hangfire;
 
 namespace LEARN
 {
@@ -10,7 +11,6 @@ namespace LEARN
             var configuration = GetConfiguration();
             var webHost = CreateWebHostBuilder(args).Build();
             webHost.Run();
-
         }
 
         private static IHostBuilder CreateWebHostBuilder(string[] args)

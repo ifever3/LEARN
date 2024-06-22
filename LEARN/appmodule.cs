@@ -2,24 +2,18 @@
 using Autofac;
 using Autofac.Core;
 using Autofac.Extensions.DependencyInjection;
-using AutoMapper;
 using AutoMapper.Contrib.Autofac.DependencyInjection;
+using Hangfire;
+using Hangfire.MySql;
 using LEARN.data;
 using LEARN.db;
 using LEARN.db.unitofwork;
 using LEARN.dependencyinjection;
-using LEARN.Handlers;
-using LEARN.mappings;
 using LEARN.Middlewares;
 using LEARN.redis;
 using Mediator.Net;
 using Mediator.Net.Autofac;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Module = Autofac.Module;
 
 namespace LEARN
@@ -49,6 +43,7 @@ namespace LEARN
             RegisterDatabase(builder);       
             RegisterMediator(builder);
             RegisterRedis(builder);
+            RegisterHangfire(builder);
 
            // builder.RegisterMultiBus(_configuration, _assemblies);
         }
@@ -70,6 +65,26 @@ namespace LEARN
                     builder.RegisterType(type).AsSelf().AsImplementedInterfaces().InstancePerDependency();
                 else
                     builder.RegisterType(type).AsSelf().AsImplementedInterfaces();
+        }
+
+        private void RegisterHangfire(ContainerBuilder builder)
+        {
+            var mysqlConnectionString = _configuration.GetValue<string>("HangfireConnection");
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddHangfire(config =>
+            {
+                config.UseStorage(new MySqlStorage(mysqlConnectionString, new MySqlStorageOptions()));
+            });
+
+            builder.Register(ctx => new MySqlStorage(mysqlConnectionString, new MySqlStorageOptions()))
+                .As<JobStorage>()
+                .SingleInstance();
+
+            builder.RegisterType<BackgroundJobServer>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.Populate(serviceCollection);
         }
 
         private void RegisterMediator(ContainerBuilder builder)

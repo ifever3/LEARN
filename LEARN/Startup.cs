@@ -1,22 +1,11 @@
 ﻿using Autofac;
-using Autofac.Core;
-using AutoMapper;
 using LEARN.authentication;
 using LEARN.extensions;
-using LEARN.mappings;
-using LEARN.model;
 using LEARN.rabbitmq;
 using MassTransit;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using StackExchange.Redis.Extensions.Core.Abstractions;
-using StackExchange.Redis.Extensions.Core.Configuration;
-using StackExchange.Redis.Extensions.Newtonsoft;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using Swashbuckle.AspNetCore.SwaggerUI;
-
+using Hangfire;
+using LEARN.hangfire;
+using Hangfire.Common;
 
 namespace LEARN
 {
@@ -51,45 +40,7 @@ namespace LEARN
                     });
             });
 
-
-            // services.AddMassTransit(x =>
-            // {
-            //     x.AddConsumer<CustomerASendedEventHandler>();
-            //     x.AddConsumer<CustomerBSendedEventHandler>();
-            //     x.UsingRabbitMq((context, cfg) =>
-            //     {
-            //         cfg.ReceiveEndpoint("event-listener", e =>
-            //         {
-            //             e.ConfigureConsumer<CustomerASendedEventHandler>(context);
-            //             e.ConfigureConsumer<CustomerBSendedEventHandler>(context);
-            //         });
-            //     });
-            // });
-            //services.AddMassTransitHostedService();
-
-            //services.AddMassTransit(x =>
-            //{
-            //    x.UsingRabbitMq((context, cfg) =>
-            //    {
-            //        cfg.ReceiveEndpoint("event-listener", e =>
-            //        {
-            //        });
-            //    });
-            //});
-            //services.AddMassTransitHostedService();
-
-            //services.AddMassTransit(x =>
-            //{
-            //    x.UsingRabbitMq((context, cfg) =>
-            //    {
-            //        cfg.Host(new Uri("rabbitmq://localhost"), h =>
-            //        {
-            //            h.Username("guest");
-            //            h.Password("guest");
-            //        });
-            //    });
-
-                services.AddMassTransit(x =>
+            services.AddMassTransit(x =>
                 {
                     x.AddConsumer<createStaffConsumer>();
                     x.SetKebabCaseEndpointNameFormatter(); 
@@ -133,6 +84,15 @@ namespace LEARN
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            // 启用 Hangfire 仪表板
+            app.UseHangfireDashboard();
+            BackgroundJob.Schedule(() => new myJob().Execute(), TimeSpan.FromMilliseconds(10));
         }
     }
 }
